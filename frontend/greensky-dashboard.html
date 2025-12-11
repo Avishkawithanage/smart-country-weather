@@ -39,8 +39,6 @@
 <body>
   <div class="container">
 
-    <!-- Header + search -->
-
     <header>
       
       
@@ -60,7 +58,6 @@
 
     </header>
 
-    <!-- Main left: current weather + hourly -->
     <main>
       <section class="mainCard">
         <div style="flex:1">
@@ -105,7 +102,7 @@
       </section>
     </main>
 
-    <!-- Right: highlights -->
+
     <aside class="rightWrap">
       <div class="highlights">
         <h3 style="margin:0 0 12px 0">Today's Highlight</h3>
@@ -360,9 +357,9 @@ function renderWeather(data){
   humMini.textContent = humVal ? Math.round(humVal) + '%' : '—';
   windStatus.textContent = windVal ? `${Math.round(windVal)} m/s` : '—';
 
-  // -------------------------
+
   // Build the JSON and send to backend
-  // -------------------------
+ 
   try {
     const jsonToSave = {
       city: top.name,
@@ -440,9 +437,9 @@ setUnit('celsius');
 searchAndShow('Colombo');
 
 
-// -------------------------
+
 // Backend integration helpers + sender
-// -------------------------
+
 
 // Change these to your backend location and desired keys/tokens.
 const BACKEND_BASE = "http://localhost:5000"; // <-- change if your backend runs elsewhere

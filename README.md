@@ -1,5 +1,4 @@
 
-
 # **GreenSky – Simple Country & Weather Information System**
 
 GreenSky is a simple web system that shows country and weather information using public APIs.
@@ -49,18 +48,20 @@ This project was created for the **Service-Oriented Computing Mini Project** at 
 ```
 smart-country-weather/
 │
-├── greensky-dashboard.html      → Weather dashboard
-├── login.html                   → Login page
-├── records.html                 → Saved records page
-│
 ├── backend/
-│   ├── server.js                → Backend server
-│   ├── models/Weather.js        → Weather model
-│   ├── routes/                  → Auth & record routes
-│   ├── middleware/              → JWT and API key middleware
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
 │   ├── package.json
-│   └── .env (not uploaded)
+│   ├── server.js
+│   └── .env (ignored)
 │
+├── frontend/
+│   ├── greensky-dashboard.html
+│   ├── login.html
+│   ├── records.html
+│
+├── .gitignore
 └── README.md
 ```
 
@@ -75,8 +76,6 @@ git clone https://github.com/Avishkawithanage/smart-country-weather
 cd smart-country-weather
 ```
 
----
-
 ### **2. Start the Backend**
 
 ```
@@ -85,14 +84,7 @@ npm install
 npm run dev
 ```
 
-Backend runs on:
-👉 **[http://localhost:5000](http://localhost:5000)**
-
----
-
-### **3. Create the `.env` File**
-
-Inside the backend folder, create:
+### **3. Create `.env`**
 
 ```
 PORT=5000
@@ -104,17 +96,13 @@ AUTH_USERNAME=your_username
 AUTH_PASSWORD=your_password
 ```
 
-⚠ **Do not upload `.env` to GitHub.**
+### **4. Run Frontend**
 
----
+Open these files in any browser:
 
-### **4. Start the Frontend**
-
-Open these files in your browser:
-
-* `login.html`
-* `greensky-dashboard.html`
-* `records.html`
+* `frontend/login.html`
+* `frontend/greensky-dashboard.html`
+* `frontend/records.html`
 
 ---
 
@@ -129,15 +117,11 @@ Returns:
 
 ### **POST /submit**
 
-Saves weather data.
-Requires:
-
-* `x-api-key`
-* `Authorization: Bearer <token>`
+Saves weather data (requires JWT + API key)
 
 ### **GET /records**
 
-Returns weather records for the logged-in user.
+Returns saved weather history
 
 ---
 
@@ -156,6 +140,27 @@ Returns weather records for the logged-in user.
 }
 ```
 
+---
+
+# 📸 **Screenshots**
+
+### **1. Login Page**
+
+![Login Page](screenshots/login.png)
+
+### **2. Weather Dashboard**
+
+![Dashboard](screenshots/dashboard.png)
+
+### **3. Saved Records Page**
+
+![Records Page](screenshots/records.png)
+
+### **4. Backend Running**
+
+![Backend Running](screenshots/backend.png)
+
+---
 
 ## **👨‍🎓 Student Information**
 
@@ -163,5 +168,3 @@ Returns weather records for the logged-in user.
 **ID:** ITBNM-2211-0199
 **Course:** BIT (Hons) Networking & Mobile Computing
 **Module:** Service-Oriented Computing
-
-

@@ -1,6 +1,3 @@
-// ========================================
-//  GreenSky Backend - Full Server.js
-// ========================================
 
 require('dotenv').config();
 const express = require('express');
@@ -11,15 +8,12 @@ const Weather = require('./models/Weather'); // <-- make sure models/Weather.js 
 
 const app = express();
 
-// ---------------------------
-// Middleware
-// ---------------------------
+
 app.use(cors());
 app.use(express.json());
 
-// ---------------------------
 // Environment variables
-// ---------------------------
+
 const PORT = process.env.PORT || 5000;
 const MONGO = process.env.MONGO_URI;
 const API_KEY = process.env.API_KEY;
@@ -28,9 +22,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const AUTH_USERNAME = process.env.AUTH_USERNAME || "avii";        // Login username
 const AUTH_PASSWORD = process.env.AUTH_PASSWORD || "password123";  // Login password
 
-// ---------------------------
+
 // Connect to MongoDB
-// ---------------------------
+
 mongoose.connect(MONGO, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -41,9 +35,9 @@ mongoose.connect(MONGO, {
   process.exit(1);
 });
 
-// ---------------------------
+
 // API Key Middleware
-// ---------------------------
+
 function checkApiKey(req, res, next) {
   const key = req.headers["x-api-key"];
   if (!key || key !== API_KEY) {
@@ -52,9 +46,9 @@ function checkApiKey(req, res, next) {
   next();
 }
 
-// ---------------------------
+
 // JWT Middleware
-// ---------------------------
+
 function verifyJwt(req, res, next) {
   const header = req.headers["authorization"];
   if (!header || !header.startsWith("Bearer ")) {
@@ -71,9 +65,9 @@ function verifyJwt(req, res, next) {
   }
 }
 
-// ---------------------------
+
 // LOGIN Route (real auth)
-// ---------------------------
+
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -101,18 +95,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// ---------------------------
+
 // DEV TOKEN Route (optional)
-// ---------------------------
+
 app.post("/dev-token", (req, res) => {
   const body = req.body || { sub: "dev-user" };
   const token = jwt.sign(body, JWT_SECRET, { expiresIn: "30d" });
   res.json({ token });
 });
 
-// ---------------------------
+
 // POST /submit (save weather)
-// ---------------------------
+
 app.post("/submit", checkApiKey, verifyJwt, async (req, res) => {
   try {
     const data = req.body || {};
@@ -132,9 +126,9 @@ app.post("/submit", checkApiKey, verifyJwt, async (req, res) => {
   }
 });
 
-// ---------------------------
+
 // GET /records (fetch saved data)
-// ---------------------------
+
 app.get("/records", checkApiKey, verifyJwt, async (req, res) => {
   try {
     const userId = req.user.sub;
@@ -148,9 +142,9 @@ app.get("/records", checkApiKey, verifyJwt, async (req, res) => {
   }
 });
 
-// ---------------------------
+
 // Start Server
-// ---------------------------
+-
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
