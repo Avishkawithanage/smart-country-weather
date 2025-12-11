@@ -1,0 +1,18 @@
+<!doctype html>
+<body style="font-family: Arial; padding: 12px;">
+<h3>Register</h3>
+<input id="email" placeholder="email" value="test@example.com"><br>
+<input id="pass" placeholder="password" value="Password123"><br>
+<button onclick="reg()">Register</button>
+<pre id="out"></pre>
+<script>
+async function reg(){
+  const r = await fetch("http://localhost:5000/auth/register", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('pass').value })
+  });
+  document.getElementById('out').innerText = await r.text();
+}
+</script>
+</body>

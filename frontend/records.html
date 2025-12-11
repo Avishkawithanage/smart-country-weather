@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GreenSky — Records</title>
+<style>
+  :root{
+    --bg:#041512; --panel:#0f2b21; --panel-2:#123925; --muted:#95b59a;
+    --accent:#19d26e; --card-radius:14px; --glass: rgba(255,255,255,0.02);
+    --white:#e7f6ef;
+  }
+  *{box-sizing:border-box;font-family:Inter, system-ui, Arial, sans-serif}
+  body{margin:0; min-height:100vh; background:linear-gradient(180deg,#04110a,#071913); color:var(--white); padding:20px}
+  .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:20px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .title{font-weight:800;font-size:20px}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{background:var(--accent);border:0;color:#012108;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+  .card{background:linear-gradient(180deg,var(--glass), transparent);padding:16px;border-radius:var(--card-radius);min-height:280px}
+  .meta{color:var(--muted);font-size:13px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  thead th{text-align:left;padding:10px 8px;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04)}
+  tbody td{padding:10px 8px;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:14px}
+  .small{font-size:13px;color:var(--muted)}
+  .rightCol{display:flex;flex-direction:column;gap:12px}
+  .card .placeholder{color:var(--muted);padding:18px;text-align:center}
+  .pager{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:12px}
+  .notice{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:13px}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr;padding:12px} .rightCol{order:3}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title">GreenSky — Saved Records</div>
+        <div class="meta small">Your saved weather history (from device / account)</div>
+      </div>
+      <div class="controls">
+        <button id="refreshBtn" class="btn">Refresh</button>
+        <button id="logoutBtn" class="btn ghost">Logout</button>
+      </div>
+    </header>
+
+    <!-- Left: records list -->
+    <main class="card" id="mainCard">
+      <div id="status" class="notice">Loading records…</div>
+
+      <div id="tableWrap" style="display:none">
+        <table aria-live="polite" id="recordsTable">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>City</th>
+              <th>Temp</th>
+              <th>Humidity</th>
+              <th>Wind</th>
+              <th>Coords</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+          </tbody>
+        </table>
+
+        <div class="pager">
+          <div id="countInfo" class="small"></div>
+          <button id="prevBtn" class="btn ghost">Prev</button>
+          <button id="nextBtn" class="btn ghost">Next</button>
+        </div>
+      </div>
+    </main>
+
+
+<script>
+  const BACKEND_BASE = window.BACKEND_BASE || "http://localhost:5000";
+  const RECORDS_ENDPOINT = BACKEND_BASE + "/records";
+
+  // Pagination
+  let rows = [];
+  let page = 0;
+  const pageSize = 12;
+
+  // Elements
+  const statusEl = document.getElementById('status');
+  const tableWrap = document.getElementById('tableWrap');
+  const recordsBody = document.getElementById('recordsBody');
+  const countInfo = document.getElementById('countInfo');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  function getApiKey(){ return localStorage.getItem('greensky_api_key') || localStorage.getItem('api_key') || null; }
+  function getJwt(){ return localStorage.getItem('greensky_jwt') || localStorage.getItem('jwt') || null; }
+
+  function requireLoginCheck(){
+    const token = getJwt();
+    if(!token){
+      alert("You are not signed in. Redirecting to login page.");
+      window.location.href = "login.html";
+      return false;
+    }
+    return true;
+  }
+
+  // Format helpers
+  function fmtDate(iso){
+    if(!iso) return '—';
+    try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; }
+  }
+  function fmtNum(n, unit=''){ return (n===null || n===undefined) ? '—' : Math.round(n) + unit; }
+
+  function renderPage(){
+    const start = page * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
+    recordsBody.innerHTML = '';
+    pageRows.forEach(r => {
+      const tr = document.createElement('tr');
+      const ts = r.timestamp || r.createdAt || null;
+      tr.innerHTML = `
+        <td>${fmtDate(ts)}</td>
+        <td><strong>${escapeHtml(r.city || r.name || '—')}</strong><div class="small">${escapeHtml(r.country || r.admin1 || '')}</div></td>
+        <td>${fmtNum(r.temperature,'°C')}</td>
+        <td>${r.humidity===null||r.humidity===undefined? '—' : Math.round(r.humidity) + '%'}</td>
+        <td>${r.wind===null||r.wind===undefined? '—' : Math.round(r.wind) + ' m/s'}</td>
+        <td class="small">${(r.latitude!==undefined && r.longitude!==undefined) ? (Number(r.latitude).toFixed(3)+', '+Number(r.longitude).toFixed(3)) : '—'}</td>
+      `;
+      recordsBody.appendChild(tr);
+    });
+
+    // update pager UI
+    const total = rows.length;
+    const from = Math.min(total, start + 1);
+    const to = Math.min(total, start + pageSize);
+    countInfo.textContent = total === 0 ? 'No records' : `${from}–${to} of ${total}`;
+    prevBtn.disabled = page === 0;
+    nextBtn.disabled = (start + pageSize) >= total;
+  }
+
+  function escapeHtml(str){
+    if(!str) return '';
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  async function fetchRecords(){
+    if(!requireLoginCheck()) return;
+    const token = getJwt();
+    const apiKey = getApiKey();
+
+    if(!apiKey){
+      statusEl.textContent = 'Missing API key in localStorage (greensky_api_key).';
+      tableWrap.style.display = 'none';
+      return;
+    }
+
+    statusEl.textContent = 'Fetching records…';
+    tableWrap.style.display = 'none';
+
+    try {
+      const res = await fetch(RECORDS_ENDPOINT, {
+        headers: {
+          "x-api-key": apiKey,
+          "Authorization": "Bearer " + token
+        }
+      });
+
+      if(res.status === 401){
+        const txt = await res.text();
+        statusEl.textContent = 'Unauthorized: ' + (txt || 'invalid token or API key');
+        return;
+      }
+
+      if(!res.ok){
+        const t = await res.text();
+        statusEl.textContent = 'Error fetching records: ' + (t || res.status);
+        return;
+      }
+
+      const data = await res.json();
+      // /records route in some implementations returns array; some return { count, records }
+      if(Array.isArray(data)){
+        rows = data;
+      } else if(data && data.records){
+        rows = data.records;
+      } else if(data && data.rows){
+        rows = data.rows;
+      } else {
+        rows = Array.isArray(data) ? data : [];
+      }
+
+      // sort newest first if timestamps exist
+      rows.sort((a,b) => {
+        const ta = new Date(a.timestamp || a.createdAt || 0).getTime();
+        const tb = new Date(b.timestamp || b.createdAt || 0).getTime();
+        return tb - ta;
+      });
+
+      page = 0;
+      if(rows.length === 0){
+        statusEl.textContent = 'No saved records yet. Search a city in the dashboard to create records.';
+        tableWrap.style.display = 'none';
+      } else {
+        statusEl.textContent = '';
+        tableWrap.style.display = '';
+        renderPage();
+      }
+
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Network error: cannot reach server. Is backend running?';
+      tableWrap.style.display = 'none';
+    }
+  }
+
+  // Events
+  prevBtn.addEventListener('click', () => { if(page>0) { page--; renderPage(); } });
+  nextBtn.addEventListener('click', () => { if((page+1)*pageSize < rows.length) { page++; renderPage(); } });
+  refreshBtn.addEventListener('click', fetchRecords);
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('greensky_jwt');
+    localStorage.removeItem('greensky_api_key');
+    // keep remembered username if any (login page uses greensky_last_user)
+    window.location.href = 'login.html';
+  });
+
+  // On load, require login and fetch
+  (function init(){
+    if(!requireLoginCheck()) return;
+    fetchRecords();
+  })();
+</script>
+</body>
+</html>

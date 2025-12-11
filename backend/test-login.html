@@ -1,0 +1,20 @@
+<!doctype html>
+<body style="font-family: Arial; padding: 12px;">
+<h3>Login</h3>
+<input id="email" value="test@example.com"><br>
+<input id="pass" value="Password123"><br>
+<button onclick="login()">Login</button>
+<pre id="out"></pre>
+<script>
+async function login(){
+  const r = await fetch("http://localhost:5000/auth/login", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('pass').value })
+  });
+  const json = await r.json();
+  document.getElementById('out').innerText = JSON.stringify(json,null,2);
+  if(json.token) localStorage.setItem('jwt', json.token);
+}
+</script>
+</body>

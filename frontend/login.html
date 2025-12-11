@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GreenSky — Login</title>
+
+  <style>
+    :root{
+      --bg:#04110a;
+      --bg2:#071913;
+      --card:#08281c;
+      --card2:#0a3222;
+      --accent:#1be275;
+      --accent2:#0bb95a;
+      --danger:#ff6b6b;
+      --muted:#9bbca5;
+      --white:#e7f6ef;
+      --radius:14px;
+      --shadow1:0 15px 40px rgba(0,0,0,0.35);
+      --shadow2:0 25px 60px rgba(0,0,0,0.55);
+    }
+
+    *{
+      box-sizing:border-box;
+      font-family: 'Inter', system-ui, Arial, sans-serif;
+    }
+
+    body{
+      margin:0;
+      background:linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--white);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
+    /* --- Background glow animations --- */
+    .glow{
+      position:absolute;
+      width:420px;
+      height:420px;
+      background:radial-gradient(circle, rgba(25,226,117,0.25), transparent 70%);
+      filter:blur(60px);
+      animation:float 8s ease-in-out infinite alternate;
+      opacity:0.8;
+    }
+    .glow2{
+      position:absolute;
+      width:300px;
+      height:300px;
+      background:radial-gradient(circle, rgba(8,80,50,0.25), transparent 70%);
+      bottom:0; right:0;
+      filter:blur(70px);
+      animation:float2 10s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes float{
+      from{ transform:translate(-200px, -120px); }
+      to{ transform:translate(-100px, -10px); }
+    }
+    @keyframes float2{
+      from{ transform:translate(40px, 80px); }
+      to{ transform:translate(0px, 10px); }
+    }
+
+    /* --- Login Card --- */
+    .card{
+      position:relative;
+      width:370px;
+      padding:34px 30px 32px;
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow1);
+      border:1px solid rgba(255,255,255,0.04);
+      animation:fadeUp 0.6s ease-out;
+      backdrop-filter:blur(10px);
+    }
+
+    @keyframes fadeUp{
+      from{ opacity:0; transform:translateY(22px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+
+    /* --- Logo --- */
+    .logo-wrap{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .logo{
+      width:50px; height:50px;
+      border-radius:12px;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:22px; color:#013015;
+      animation:pulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse{
+      0%{ transform:scale(1); box-shadow:0 0 0 rgba(27,226,117,0.3); }
+      50%{ transform:scale(1.05); box-shadow:0 0 25px rgba(27,226,117,0.25); }
+      100%{ transform:scale(1); box-shadow:0 0 0 rgba(27,226,117,0.3); }
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      font-weight:700;
+    }
+
+    .lead{
+      font-size:13px;
+      color:var(--muted);
+      margin:4px 0 10px;
+    }
+
+    label{
+      font-size:13px;
+      margin-top:14px;
+      color:var(--muted);
+      display:block;
+    }
+
+    input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.05);
+      color:var(--white);
+      margin-top:6px;
+      transition:border-color 0.15s, box-shadow 0.15s;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 12px rgba(27,226,117,0.25);
+    }
+
+    /* Password toggle */
+    .pw-toggle{
+      position:relative;
+    }
+    .pw-toggle button{
+      position:absolute;
+      right:12px;
+      top:11px;
+      background:transparent;
+      border:0;
+      cursor:pointer;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:10px;
+    }
+
+    #help{ 
+      font-size:12px; 
+      color:var(--muted);
+      cursor:pointer;
+      text-decoration:underline;
+    }
+
+    .btn{
+      width:100%;
+      padding:13px;
+      margin-top:18px;
+      border-radius:10px;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      border:0;
+      font-size:15px;
+      font-weight:700;
+      color:#013015;
+      cursor:pointer;
+      transition:transform .1s, box-shadow .1s;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 10px 30px rgba(27,226,117,0.3);
+    }
+    .btn:active{
+      transform:translateY(1px);
+      box-shadow:none;
+    }
+
+    .msg{
+      margin-top:12px;
+      min-height:20px;
+      font-size:14px;
+      text-align:center;
+    }
+    .msg.success{ color:var(--accent); }
+    .msg.error{ color:var(--danger); }
+
+    .foot{
+      margin-top:14px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="card">
+
+  <div class="logo-wrap">
+    <div class="logo">G</div>
+    <div>
+      <h1>GreenSky Dashboard</h1>
+      <div class="lead">Sign in to continue</div>
+    </div>
+  </div>
+
+  <label>Username</label>
+  <input id="username" type="text" autocomplete="username" placeholder="Enter username">
+
+  <label>Password</label>
+  <div class="pw-toggle">
+    <input id="password" type="password" autocomplete="current-password" placeholder="Enter password">
+    <button id="togglePw">Show</button>
+  </div>
+
+  <div class="row">
+    <label style="font-size:13px;color:var(--muted);">
+      <input type="checkbox" id="remember"> Remember me
+    </label>
+    <div id="help">Help?</div>
+  </div>
+
+  <button class="btn" id="loginBtn">Sign in</button>
+  <div id="msg" class="msg"></div>
+
+  <div class="foot">A demo login system for GreenSky development</div>
+
+</div>
+
+<script>
+const BACKEND_BASE = "http://localhost:5000";
+const usernameEl = document.getElementById("username");
+const passwordEl = document.getElementById("password");
+const rememberEl = document.getElementById("remember");
+const msgEl = document.getElementById("msg");
+
+// Restore username if remembered
+const savedUser = localStorage.getItem("greensky_last_user");
+if (savedUser) {
+  usernameEl.value = savedUser;
+  rememberEl.checked = true;
+}
+
+function setMsg(text, type){
+  msgEl.textContent = text;
+  msgEl.className = "msg " + (type === "ok" ? "success" : type === "error" ? "error" : "");
+}
+
+document.getElementById("togglePw").onclick = () => {
+  passwordEl.type = passwordEl.type === "password" ? "text" : "password";
+  document.getElementById("togglePw").textContent = passwordEl.type === "password" ? "Show" : "Hide";
+};
+
+document.getElementById("loginBtn").onclick = async () => {
+  setMsg("Signing in...", "");
+
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value;
+
+  if (!username || !password) {
+    setMsg("Enter username and password", "error");
+    return;
+  }
+
+  if (rememberEl.checked) localStorage.setItem("greensky_last_user", username);
+  else localStorage.removeItem("greensky_last_user");
+
+  try {
+    const r = await fetch(`${BACKEND_BASE}/login`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({username, password})
+    });
+
+    const data = await r.json();
+
+    if (!r.ok){
+      setMsg(data.error || "Invalid username or password", "error");
+      return;
+    }
+
+    // Save JWT + API key
+    localStorage.setItem("greensky_jwt", data.token);
+    localStorage.setItem("greensky_api_key", data.apiKey);
+
+    setMsg("Login successful — redirecting...", "ok");
+
+    setTimeout(()=> window.location.href="greensky-dashboard.html", 900);
+
+  } catch (err){
+    console.error(err);
+    setMsg("Cannot reach server. Is backend running?", "error");
+  }
+};
+
+document.getElementById("help").onclick = ()=>{
+  alert("Default login:\n\nUsername: avii\nPassword: password123\n\nYou can change these in the backend .env file.");
+};
+</script>
+
+</body>
+</html>

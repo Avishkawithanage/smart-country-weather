@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GreenSky Weather Dashboard</title>
+<style>
+ 
+  :root{
+    --bg:#041512; --panel:#0f2b21; --panel-2:#123925; --muted:#95b59a;
+    --accent:#19d26e; --card-radius:16px; --glass: rgba(255,255,255,0.02);
+  }
+  *{box-sizing:border-box;font-family:Inter, system-ui, Arial, sans-serif}
+  body{margin:0; min-height:100vh; background:linear-gradient(180deg,#04110a,#071913); color:#e7f6ef; padding:24px}
+  .container{max-width:1150px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:22px}
+  header{grid-column:1/-1;display:flex;align-items:center;gap:12px}
+  .search{display:flex;align-items:center;gap:10px;width:100%;background:var(--panel);padding:12px 16px;border-radius:999px}
+  .search input{background:transparent;border:0;outline:none;color:inherit;font-size:15px;flex:1;padding:6px 8px}
+  .btn{background:var(--accent);border:0;color:#012108;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  .toggle{background:transparent;border-radius:999px;padding:6px;display:flex;gap:6px;align-items:center}
+  .toggle button{background:transparent;color:var(--muted);border:0;cursor:pointer;padding:6px 8px;border-radius:8px}
+  .toggle .active{background:rgba(255,255,255,0.03);color:#e9fff0}
+  .mainCard{background:linear-gradient(180deg,var(--glass), transparent);border-radius:var(--card-radius);padding:18px;display:flex;gap:16px;min-height:220px}
+  .tempBig{font-size:64px;font-weight:800;line-height:1;margin:6px 0}
+  .feels{color:var(--muted);font-size:14px}
+  .hourlyCard{margin-top:16px;background:var(--panel);padding:12px;border-radius:12px;display:flex;gap:10px;overflow:auto}
+  .hour{min-width:72px;padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);text-align:center;color:var(--muted);font-size:13px}
+  .rightWrap{display:flex;flex-direction:column;gap:16px}
+  .highlights{background:var(--panel-2);Padding:16px;border-radius:var(--card-radius)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mini{background:linear-gradient(180deg,var(--glass), transparent);padding:12px;border-radius:12px;min-height:72px}
+  .otherCities{display:flex;gap:12px;margin-top:8px}
+  .citySmall{flex:1;background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;text-align:center}
+  footer{grid-column:1/-1;color:var(--muted);font-size:13px;margin-top:12px;text-align:center}
+  .metaSmall{font-size:13px;color:var(--muted);margin-top:6px}
+  @media (max-width:980px){.container{grid-template-columns:1fr;padding:12px}; .rightWrap{order:3}}
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header + search -->
+
+    <header>
+      
+      
+      <div class="search" role="search" aria-label="Search City">
+        <input id="cityInput" placeholder="Search city (e.g., Colombo)" autocomplete="off" />
+        <div class="toggle" style="margin-left:8px" title="Toggle units">
+          <button id="btnC">C</button>
+          <button id="btnF" class="active">F</button>
+        </div>
+        <button id="searchBtn" class="btn">Search</button>
+      </div>
+     
+<button id="recordsBtn" class="btn" style="margin-left:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600;padding:8px 12px;border-radius:10px">
+  Records
+
+</button>
+
+    </header>
+
+    <!-- Main left: current weather + hourly -->
+    <main>
+      <section class="mainCard">
+        <div style="flex:1">
+
+
+          <div style="font-weight:700; font-size:16px; margin-bottom:6px">GreenSky Weather Dashboard</div>
+
+    
+          <div class="city-pill" id="cityPill" style="display:inline-block; background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:999px; color:var(--muted)">Kathmandu · Nepal</div>
+          <div class="metaSmall" id="latlon">lat: — lon: — · tz: —</div>
+
+   
+          <div style="display:flex;align-items:flex-start;gap:18px; margin-top:8px">
+            <div>
+              <div class="tempBig" id="tempBig">—</div>
+              <div class="feels" id="feels">—</div>
+              <div class="sun-highlow" id="highLow">High: —  Low: —</div>
+            </div>
+            <div style="width:170px;height:140px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent)">
+              <svg id="bigIcon" width="100" height="80" viewBox="0 0 64 48"></svg>
+            </div>
+          </div>
+
+          <div class="hourlyCard" id="hourlyCard" aria-live="polite"></div>
+        </div>
+      </section>
+
+     
+      <section style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px;background:var(--panel);padding:16px;border-radius:14px">
+          <h3 style="margin:0 0 10px 0">Today / Week</h3>
+          <div id="todayBox" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"></div>
+          <div style="margin-top:10px;color:var(--muted)" id="sunTimes"></div>
+        </div>
+
+        <div style="width:320px;background:var(--panel);padding:16px;border-radius:14px">
+          <h3 style="margin:0 0 10px 0">Tomorrow</h3>
+          <div style="font-size:28px;font-weight:700" id="tomorrowTemp">—</div>
+          <div style="color:var(--muted);margin-top:8px" id="tomorrowDesc">—</div>
+          <div style="margin-top:12px;color:var(--muted)" id="dayLength">—</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Right: highlights -->
+    <aside class="rightWrap">
+      <div class="highlights">
+        <h3 style="margin:0 0 12px 0">Today's Highlight</h3>
+        <div class="grid2">
+          <div class="mini">
+            <h4 style="font-size:14px;margin:0">Chances of Rain</h4>
+            <div id="rainChart" style="height:40px;display:flex;align-items:end;gap:6px;margin-top:8px"></div>
+          </div>
+          <div class="mini">
+            <h4 style="font-size:14px;margin:0">UV Index</h4>
+            <div id="uvIndex" style="font-size:22px;font-weight:700;margin-top:8px">—</div>
+          </div>
+          <div class="mini">
+            <h4 style="font-size:14px;margin:0">Wind Status</h4>
+            <div id="windStatus" style="margin-top:8px;color:var(--muted)">— m/s</div>
+          </div>
+          <div class="mini">
+            <h4 style="font-size:14px;margin:0">Humidity</h4>
+            <div id="humMini" style="margin-top:8px;color:var(--muted)">— %</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <h4 style="font-size:14px;margin:8px 0">Other Cities</h4>
+          <div class="otherCities" id="otherCities">
+            
+            <div class="citySmall" data-city="Pokhara">Pokhara<br/><strong class="otherTemp">—</strong></div>
+            <div class="citySmall" data-city="Biratnagar">Biratnagar<br/><strong class="otherTemp">—</strong></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <footer>greensky-dashboard develop by ITBNM-2211-0199 </footer>
+  </div>
+
+<script>
+
+const cityInput = document.getElementById('cityInput');
+const searchBtn = document.getElementById('searchBtn');
+const cityPill = document.getElementById('cityPill');
+const latlon = document.getElementById('latlon');
+const tempBig = document.getElementById('tempBig');
+const feels = document.getElementById('feels');
+const highLow = document.getElementById('highLow');
+const bigIcon = document.getElementById('bigIcon');
+const hourlyCard = document.getElementById('hourlyCard');
+const sunTimes = document.getElementById('sunTimes');
+const tomorrowTemp = document.getElementById('tomorrowTemp');
+const tomorrowDesc = document.getElementById('tomorrowDesc');
+const dayLength = document.getElementById('dayLength');
+const rainChart = document.getElementById('rainChart');
+const uvIndex = document.getElementById('uvIndex');
+const windStatus = document.getElementById('windStatus');
+const humMini = document.getElementById('humMini');
+
+const btnF = document.getElementById('btnF'), btnC = document.getElementById('btnC');
+
+
+let unit = 'celsius';
+function setUnit(u){
+  unit = u;
+  btnF.classList.toggle('active', u === 'fahrenheit');
+  btnC.classList.toggle('active', u === 'celsius');
+  if(window.lastWeather) renderWeather(window.lastWeather); 
+}
+btnF.addEventListener('click', ()=> setUnit('fahrenheit'));
+btnC.addEventListener('click', ()=> setUnit('celsius'));
+
+
+function cToF(c){ return (c * 9/5) + 32; }
+function formatTemp(t){
+  if(t === null || t === undefined) return '—';
+  return unit === 'celsius' ? Math.round(t) + '°C' : Math.round(cToF(t)) + '°F';
+}
+
+
+function isoToMillisNoTZ(isoStr){
+  if(!isoStr) return NaN;
+  const parts = isoStr.split('T');
+  if(parts.length < 2) return NaN;
+  const d = parts[0].split('-').map(n=>parseInt(n,10));
+  const tparts = parts[1].split(':').map(n=>parseInt(n,10));
+  const year = d[0] || 0;
+  const month = (d[1]||1) - 1;
+  const day = d[2] || 1;
+  const hour = tparts[0] || 0;
+  const minute = tparts[1] || 0;
+  const second = tparts[2] || 0;
+  return Date.UTC(year, month, day, hour, minute, second);
+}
+
+
+function findBestIndex(hourlyTimes, targetTimeStr){
+  if(!Array.isArray(hourlyTimes) || hourlyTimes.length === 0 || !targetTimeStr) return 0;
+
+  const exact = hourlyTimes.findIndex(t => t === targetTimeStr);
+  if(exact !== -1) return exact;
+
+  const prefix = targetTimeStr.slice(0,13);
+  const pidx = hourlyTimes.findIndex(t => t.slice(0,13) === prefix);
+  if(pidx !== -1) return pidx;
+
+  const targetMillis = isoToMillisNoTZ(targetTimeStr);
+  let best = 0; let bestDiff = Infinity;
+  for(let i=0;i<hourlyTimes.length;i++){
+    const m = isoToMillisNoTZ(hourlyTimes[i]);
+    const diff = Math.abs(m - targetMillis);
+    if(diff < bestDiff){ bestDiff = diff; best = i; }
+  }
+  return best;
+}
+
+
+async function geocode(name){
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(name) + '&count=5&language=en&format=json';
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('Geocoding failed');
+  return r.json();
+}
+
+async function fetchWeather(lat, lon, timezone){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,precipitation,windspeed_10m,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=${encodeURIComponent(timezone||'auto')}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('Weather fetch failed');
+  return r.json();
+}
+
+
+function drawIconSimple(code, container){
+  if(!container) return;
+  let svg = '';
+  if(code === 0) svg = `<circle cx="20" cy="18" r="8" fill="#FFD24D"/>`;
+  else if(code <= 3) svg = `<circle cx="18" cy="18" r="6" fill="#FFD24D"/><ellipse cx="36" cy="22" rx="14" ry="8" fill="#CFEFE0"/>`;
+  else if(code >= 61 && code <= 65) svg = `<ellipse cx="30" cy="22" rx="16" ry="9" fill="#CFEFE0"/><path d="M24 30c1.5 3 2 4 4 6" stroke="#BEE7D1" stroke-width="2" stroke-linecap="round"/>`;
+  else if(code >= 95) svg = `<ellipse cx="32" cy="20" rx="18" ry="10" fill="#CFEFE0"/><path d="M20 30c6-6 8-6 14 0" stroke="#F3F3F3" stroke-width="3"/>`;
+  else svg = `<ellipse cx="32" cy="22" rx="18" ry="10" fill="#CFEFE0"/>`;
+  container.innerHTML = svg;
+}
+
+
+function renderWeather(data){
+  if(!data) return;
+  const top = data.geo;
+  const w = data.weather;
+  const cw = w.current_weather || {};
+  const hourly = w.hourly || {};
+  const daily = w.daily || {};
+
+
+  const currentTimeStr = cw.time || (hourly.time && hourly.time[0]);
+  const bestIdx = findBestIndex(hourly.time || [], currentTimeStr);
+  console.log('DEBUG: matched index', bestIdx, 'for', currentTimeStr);
+
+
+  cityPill.textContent = `${top.name}${top.admin1 ? ', ' + top.admin1 : ''} · ${top.country}`;
+  latlon.textContent = `lat: ${top.latitude.toFixed(3)} lon: ${top.longitude.toFixed(3)} · tz: ${top.timezone || 'auto'}`;
+
+
+  tempBig.textContent = formatTemp(cw.temperature);
+ 
+  const windVal = (hourly.windspeed_10m && hourly.windspeed_10m.length) ? (hourly.windspeed_10m[bestIdx] ?? cw.windspeed) : cw.windspeed;
+  feels.textContent = windVal ? `Wind: ${Math.round(windVal)} m/s` : 'Wind: —';
+
+
+  const high = daily.temperature_2m_max ? daily.temperature_2m_max[0] : null;
+  const low = daily.temperature_2m_min ? daily.temperature_2m_min[0] : null;
+  highLow.textContent = `High: ${formatTemp(high)}  Low: ${formatTemp(low)}`;
+
+  // big icon from weathercode
+  drawIconSimple(cw.weathercode, bigIcon);
+
+  // build hourly strip starting at bestIdx (next 12 points)
+  hourlyCard.innerHTML = '';
+  for(let i = bestIdx; i < Math.min((hourly.time||[]).length, bestIdx + 12); i++){
+    const tstr = hourly.time[i] || '';
+    const tTemp = (hourly.temperature_2m||[])[i];
+    const tPrecip = (hourly.precipitation||[])[i] ?? 0;
+    const hourLabel = tstr ? tstr.slice(11,16) : '';
+    const el = document.createElement('div');
+    el.className = 'hour';
+    el.innerHTML = `<div style="font-weight:700">${hourLabel}</div><div style="margin-top:6px">${formatTemp(tTemp)}</div><div style="margin-top:6px;color:var(--muted);font-size:12px">${tPrecip} mm</div>`;
+    hourlyCard.appendChild(el);
+  }
+
+  
+  const todayBox = document.getElementById('todayBox');
+  todayBox.innerHTML = '';
+  if(hourly.time && hourly.temperature_2m){
+    for(let j=0;j<5;j++){
+      const i = Math.min(hourly.time.length-1, bestIdx + j*3);
+      const tstr = hourly.time[i];
+      const t = hourly.temperature_2m[i];
+      const label = (j===0) ? 'Now' : (tstr ? tstr.slice(11,16) : '');
+      const card = document.createElement('div');
+      card.style.minWidth = '60px';
+      card.style.background = 'rgba(255,255,255,0.02)';
+      card.style.padding = '8px';
+      card.style.borderRadius = '8px';
+      card.style.textAlign = 'center';
+      card.innerHTML = `<div style="font-size:12px;color:var(--muted)">${label}</div><div style="font-weight:700;margin-top:6px">${formatTemp(t)}</div>`;
+      todayBox.appendChild(card);
+    }
+  }
+
+  if(daily.sunrise && daily.sunset){
+    const sr = daily.sunrise[0] || '';
+    const ss = daily.sunset[0] || '';
+    const srLabel = sr ? sr.slice(11,16) : '—';
+    const ssLabel = ss ? ss.slice(11,16) : '—';
+    sunTimes.textContent = `Sunrise: ${srLabel} · Sunset: ${ssLabel}`;
+    
+
+    try{
+      const d1 = new Date(sr);
+      const d2 = new Date(ss);
+      const diff = (d2 - d1)/1000;
+      const hrs = Math.floor(diff/3600);
+      const mins = Math.floor((diff%3600)/60);
+      dayLength.textContent = `Day length: ${hrs} hr ${mins} min`;
+    }catch(e){ dayLength.textContent = ''; }
+  } else {
+    sunTimes.textContent = ''; dayLength.textContent = '';
+  }
+
+  // tomorrow temp
+  if(daily.temperature_2m_max && daily.temperature_2m_min){
+    tomorrowTemp.textContent = formatTemp(daily.temperature_2m_max[1] ?? daily.temperature_2m_max[0]);
+    tomorrowDesc.textContent = 'Forecast';
+  }
+
+  // rain chart: next 6 hours from bestIdx
+  rainChart.innerHTML = '';
+  if(hourly.precipitation){
+    for(let k=0;k<6;k++){
+      const idxk = Math.min(hourly.precipitation.length-1, bestIdx + k);
+      const v = hourly.precipitation[idxk] ?? 0;
+      const bar = document.createElement('div');
+      bar.style.height = Math.min(100, v * 16 + 6) + 'px';
+      bar.style.width = '10px';
+      bar.style.background = v > 0 ? 'linear-gradient(180deg,#19d26e,#13774f)' : 'rgba(255,255,255,0.03)';
+      bar.style.borderRadius = '4px';
+      rainChart.appendChild(bar);
+    }
+  }
+
+  
+  uvIndex.textContent = (daily.uv_index_max && daily.uv_index_max[0] !== undefined) ? (daily.uv_index_max[0] + ' / 10') : '—';
+
+
+  const humVal = (hourly.relativehumidity_2m && hourly.relativehumidity_2m.length) ? (hourly.relativehumidity_2m[bestIdx] ?? hourly.relativehumidity_2m[0]) : null;
+  humMini.textContent = humVal ? Math.round(humVal) + '%' : '—';
+  windStatus.textContent = windVal ? `${Math.round(windVal)} m/s` : '—';
+
+  // -------------------------
+  // Build the JSON and send to backend
+  // -------------------------
+  try {
+    const jsonToSave = {
+      city: top.name,
+      country: top.country,
+      admin1: top.admin1 || null,
+      latitude: top.latitude,
+      longitude: top.longitude,
+      timezone: top.timezone || null,
+      temperature: cw.temperature ?? null,
+      humidity: humVal ?? null,
+      wind: windVal ?? null,
+      weathercode: cw.weathercode ?? null,
+      timestamp: new Date().toISOString()
+    };
+
+    // send — update backend URL / keys below if needed
+    sendToBackend(jsonToSave);
+  } catch (e) {
+    console.warn("Failed to build/send JSON:", e);
+  }
+
+  // update other cities asynchronously (keeps UI snappy)
+  document.querySelectorAll('.citySmall').forEach(async el => {
+    const cname = el.dataset.city;
+    try{
+      const g = await geocode(cname);
+      if(g && g.results && g.results[0]){
+        const r = g.results[0];
+        const w2 = await fetchWeather(r.latitude, r.longitude, r.timezone || 'auto');
+        const tval = w2.current_weather ? w2.current_weather.temperature : null;
+        el.querySelector('.otherTemp').textContent = tval === null ? '—' : formatTemp(tval);
+      }
+    }catch(e){ console.warn('other city failed', cname); }
+  });
+}
+
+
+async function searchAndShow(qName = 'Kathmandu'){
+  if(!qName) return;
+ 
+  tempBig.textContent = 'Loading...'; feels.textContent = '';
+
+  try{
+    const geo = await geocode(qName);
+    if(!geo || !geo.results || geo.results.length === 0){ alert('City not found'); return; }
+    const top = geo.results[0];
+
+    // show location label and lat/lon
+    cityPill.textContent = `${top.name}${top.admin1 ? ', ' + top.admin1 : ''} · ${top.country}`;
+    latlon.textContent = `lat: ${top.latitude.toFixed(3)} lon: ${top.longitude.toFixed(3)} · tz: ${top.timezone || 'auto'}`;
+
+    const tz = top.timezone || 'auto';
+    const weather = await fetchWeather(top.latitude, top.longitude, tz);
+    window.lastWeather = { geo: top, weather: weather, tz: tz };
+
+    
+    console.log('Geocode result:', top);
+    console.log('Weather timezone:', tz);
+    console.log('current_weather.time:', weather.current_weather && weather.current_weather.time);
+    console.log('hourly times sample:', (weather.hourly && weather.hourly.time && weather.hourly.time.slice(0,8)) || []);
+
+    renderWeather(window.lastWeather);
+  }catch(err){
+    console.error(err);
+    alert('Error: ' + err.message);
+  }
+}
+
+
+document.getElementById('searchBtn').addEventListener('click', ()=> searchAndShow(cityInput.value || 'Colombo'));
+cityInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') searchAndShow(cityInput.value); });
+
+
+setUnit('celsius');
+searchAndShow('Colombo');
+
+
+// -------------------------
+// Backend integration helpers + sender
+// -------------------------
+
+// Change these to your backend location and desired keys/tokens.
+const BACKEND_BASE = "http://localhost:5000"; // <-- change if your backend runs elsewhere
+function getApiKey() {
+  // read from localStorage or return a constant for now
+  return localStorage.getItem("greensky_api_key") || "MY_FRONTEND_KEY_123";
+}
+function getAuthToken() {
+  // replace with real OAuth/JWT flow later
+  return localStorage.getItem("greensky_jwt") || "test_jwt_token_123";
+}
+
+async function sendToBackend(finalJSON) {
+  // Basic guard to avoid noisy errors during UI dev
+  if(!BACKEND_BASE) return;
+
+  try {
+    const response = await fetch(`${BACKEND_BASE}/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": getApiKey(),
+        "Authorization": "Bearer " + getAuthToken()
+      },
+      body: JSON.stringify(finalJSON)
+    });
+
+    // handle non-JSON or error statuses gracefully
+    const text = await response.text();
+    try {
+      const result = JSON.parse(text);
+      console.log("Saved to backend:", result);
+    } catch (e) {
+      // if server returned plain text, log it
+      console.log("Saved to backend (non-json):", text);
+    }
+  } catch (err) {
+    // keep UI working if backend is not up
+    console.error("Backend error (non-blocking):", err);
+  }
+}
+
+// === Records navigation + session check ===
+function getApiKey() {
+  return localStorage.getItem("greensky_api_key") || localStorage.getItem("api_key") || null;
+}
+function getAuthToken() {
+  return localStorage.getItem("greensky_jwt") || localStorage.getItem("jwt") || null;
+}
+
+function goToRecordsPage() {
+  const token = getAuthToken();
+  const key = getApiKey();
+
+  if (!token) {
+    // Not signed in — redirect to login
+    if (confirm("You are not signed in. Go to login page?")) {
+      window.location.href = "login.html";
+    }
+    return;
+  }
+
+  if (!key) {
+    // Missing API key — notify user
+    alert("API key not found in localStorage (greensky_api_key). Please sign in via Login page.");
+    return;
+  }
+
+  // Open records page
+  window.location.href = "records.html";
+}
+
+const recordsBtn = document.getElementById("recordsBtn");
+if (recordsBtn) {
+  recordsBtn.addEventListener("click", goToRecordsPage);
+}
+
+
+</script>
+</body>
+</html>

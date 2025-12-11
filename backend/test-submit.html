@@ -1,0 +1,32 @@
+<!doctype html>
+<body style="font-family: Arial; padding: 12px;">
+<h3>Submit Weather</h3>
+<input id="city" placeholder="City" value="Colombo"><br>
+<input id="temp" placeholder="Temperature" value="30"><br>
+<input id="hum" placeholder="Humidity" value="75"><br>
+<input id="wind" placeholder="Wind" value="4.5"><br>
+<button onclick="submitData()">Send</button>
+<pre id="out"></pre>
+<script>
+async function submitData(){
+  const payload = {
+    city: document.getElementById('city').value,
+    temperature: Number(document.getElementById('temp').value),
+    humidity: Number(document.getElementById('hum').value),
+    wind: Number(document.getElementById('wind').value),
+    timestamp: new Date().toISOString()
+  };
+  const token = localStorage.getItem('jwt') || '';
+  const res = await fetch("http://localhost:5000/submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "12345",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('out').innerText = await res.text();
+}
+</script>
+</body>

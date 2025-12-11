@@ -1,0 +1,15 @@
+<!doctype html>
+<body style="font-family: Arial; padding: 12px;">
+<h3>Get Records</h3>
+<button onclick="getRecords()">Get</button>
+<pre id="out"></pre>
+<script>
+async function getRecords(){
+  const token = localStorage.getItem('jwt') || '';
+  const r = await fetch("http://localhost:5000/records", {
+    headers: { "x-api-key": "12345", "Authorization": "Bearer " + token }
+  });
+  document.getElementById('out').innerText = await r.text();
+}
+</script>
+</body>
